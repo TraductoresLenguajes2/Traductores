@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="practica2_ASintacticoLR1">
+</Property><Property Name="Archivo de la solución" Value="E:\Descargas\Compiladores 1\Practicas\practica2_ASintacticoLR1_terminada\practica2_ASintacticoLR1_terminada\practica2_ASintacticoLR1.sln">
+</Property><Property Name="Archivo de opciones de usuario" Value="E:\Descargas\Compiladores 1\Practicas\practica2_ASintacticoLR1_terminada\practica2_ASintacticoLR1_terminada\practica2_ASintacticoLR1.suo">
+</Property><Property Name="Date" Value="viernes, 11 de septiembre de 2009">
+</Property><Property Name="Time" Value="0:45">
+</Property></Properties><Event ErrorLevel="0" Project="" Source="practica2_ASintacticoLR1.sln" Description="La copia E:\Descargas\Compiladores 1\Practicas\practica2_ASintacticoLR1_terminada\practica2_ASintacticoLR1_terminada\practica2_ASintacticoLR1.sln.old del archivo se ha realizado correctamente">
+</Event><Event ErrorLevel="0" Project="" Source="practica2_ASintacticoLR1.suo" Description="La copia E:\Descargas\Compiladores 1\Practicas\practica2_ASintacticoLR1_terminada\practica2_ASintacticoLR1_terminada\practica2_ASintacticoLR1.suo.old del archivo se ha realizado correctamente">
+</Event><Event ErrorLevel="0" Project="practica1_ASintacticoLR1" Source="practica1_ASintacticoLR1\practica1_ASintacticoLR1.vcproj" Description="Ya no se permite la implementación web en el servidor de IIS local. La herramienta de generación de implementación web se ha quitado de la configuración del proyecto.">
+</Event><Event ErrorLevel="1" Project="practica1_ASintacticoLR1" Source="practica1_ASintacticoLR1\practica1_ASintacticoLR1.vcproj" Description="Esta aplicación se ha actualizado para incluir la configuración relacionada con la característica Control de cuentas de usuario (UAC) de Windows Vista. De manera predeterminada, cuando se ejecuta en Windows Vista con el Control de cuentas de usuario habilitado, la aplicación está marcada para que se ejecute con los mismos privilegios que el proceso que la inició y para que no pueda ejecutarse con virtualización. Puede cambiar la configuración relativa al Control de cuentas de usuario desde las páginas de propiedades del proyecto.">
+</Event><Event ErrorLevel="0" Project="practica1_ASintacticoLR1" Source="practica1_ASintacticoLR1\practica1_ASintacticoLR1.vcproj" Description="Se realizó correctamente la copia de seguridad del archivo de proyecto 'E:\Descargas\Compiladores 1\Practicas\practica2_ASintacticoLR1_terminada\practica2_ASintacticoLR1_terminada\practica1_ASintacticoLR1\practica1_ASintacticoLR1.vcproj.8.00.old'.">
+</Event><Event ErrorLevel="0" Project="practica1_ASintacticoLR1" Source="practica1_ASintacticoLR1\practica1_ASintacticoLR1.vcproj" Description="Proyecto actualizado correctamente.">
+</Event><Event ErrorLevel="3" Project="practica1_ASintacticoLR1" Source="practica1_ASintacticoLR1\practica1_ASintacticoLR1.vcproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="" Source="practica2_ASintacticoLR1.sln" Description="La solución se convirtió correctamente">
+</Event><Event ErrorLevel="3" Project="" Source="practica2_ASintacticoLR1.sln" Description="Converted">
+</Event></UpgradeLog>
