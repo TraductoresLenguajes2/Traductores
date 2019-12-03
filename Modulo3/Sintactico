@@ -1,0 +1,455 @@
+using System;
+
+namespace Compiladores
+{
+    /// <summary>
+    /// Permite generar un análisis léxico sobre una entrada dada para obtener los tokens 
+    /// que componen la misma
+    /// </summary>
+    public class AnalizadorLexico
+    {
+        #region Variables y propiedades
+
+        //La fuente de datos que se usa para efectuar el análisis
+        private String fuente;
+
+        //El caracter actualmente leído, y su posición en la fuente
+        private char c;
+        private int indice;
+
+        //El estado actual del automata finito
+        private int estado;
+
+        //Un valor que índica si continuar o detener el análisis léxico
+        private bool continua;
+
+        /// <summary>
+        /// Obtiene o modifica la fuente en la que nos basamos para generar el análisis 
+        /// léxico
+        /// </summary>
+        public String Fuente
+        {
+            get { return fuente; }
+            set
+            {
+                //En winforms el salto de línea es "\r\n", si no lo reemplazamos se 
+                //contabilizara como 2 saltos de línea separados, lo cual interfiere 
+                //al contar el número de línea actual
+                fuente = value.Replace("\r\n", "\n");
+
+                ReiniciaPosicionEntrada();
+            }
+        }
+
+        /// <summary>
+        /// Obtiene el último simbolo encontrado durante el análisis léxico
+        /// </summary>
+        public String Simbolo
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Obtiene el tipo del último simbolo encontrado durante el análisis léxico
+        /// </summary>
+        public int Tipo
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Obtiene el número de línea actual del análisis
+        /// </summary>
+        public int LineaActual
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Obtiene el número de línea del último simbolo encontrado
+        /// </summary>
+        public int LineaUltimoSimbolo
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Obtiene la posición del caracter actual, con respecto a la línea actual
+        /// </summary>
+        public int PosicionCaracterActual
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Obtiene la posicion del último simbolo encontrado, con respecto a la línea en 
+        /// que se encontraba
+        /// </summary>
+        public int PosicionUltimoSimbolo
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Obtiene la posición del caracter actual, con respecto a la fuente completa
+        /// </summary>
+        public int PosicionAbsolutaCaracterActual
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Obtiene la posición del último simbolo encontrado, con respecto a la fuente 
+        /// completa
+        /// </summary>
+        public int PosicionAbsolutaUltimoSimbolo
+        {
+            get;
+            private set;
+        }
+
+        #endregion
+
+        #region Estados y tabla del automata
+
+        //Estados para el automata
+        private const int q00 = 0;
+        private const int q01 = 1;
+        private const int q02 = 2;
+        private const int q03 = 3;
+        private const int q04 = 4;
+        private const int q05 = 5;
+        private const int q06 = 6;
+        private const int q07 = 7;
+        private const int FIN = 8;
+        private const int ERR = 9;
+
+        //Tabla del automata
+        private int[,] tablaEstados = 
+        {
+        //                                       ( )
+        //  (0-9) (+,-) (*,/)  (()   ())   ($)   (\t)  (\n) (otro)
+            {q01,  q02,  q03,  q04,  q05,  q06,  FIN,  FIN,  q07}, //q00
+            {q01,  FIN,  FIN,  FIN,  FIN,  FIN,  FIN,  FIN,  FIN}, //q01 (Entero)
+            {FIN,  FIN,  FIN,  FIN,  FIN,  FIN,  FIN,  FIN,  FIN}, //q02 (Op adición)
+            {FIN,  FIN,  FIN,  FIN,  FIN,  FIN,  FIN,  FIN,  FIN}, //q03 (Op multiplicación)
+            {FIN,  FIN,  FIN,  FIN,  FIN,  FIN,  FIN,  FIN,  FIN}, //q04 (Parentesis inicio)
+            {FIN,  FIN,  FIN,  FIN,  FIN,  FIN,  FIN,  FIN,  FIN}, //q05 (Parentesis fin)
+            {FIN,  FIN,  FIN,  FIN,  FIN,  FIN,  FIN,  FIN,  FIN}, //q06 (Pesos)
+            {ERR,  ERR,  ERR,  ERR,  ERR,  ERR,  ERR,  ERR,  q07}  //q07 (Error)
+        };
+
+        #endregion
+
+        //================================================================================
+
+        #region Constructores
+
+        /// <summary>
+        /// Devuelve a su valor por default los valores que índican direcciones relativas 
+        /// de lectura de la fuente
+        /// </summary>
+        private void ReiniciaDireccionesRelativasLectura()
+        {
+            LineaActual = LineaUltimoSimbolo = 1;
+            PosicionCaracterActual = PosicionUltimoSimbolo =
+                PosicionAbsolutaCaracterActual = PosicionAbsolutaUltimoSimbolo = 0;
+        }
+
+        //================================================================================
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public AnalizadorLexico()
+            : this("")
+        {
+        }
+
+        //================================================================================
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="entrada">La fuente sobre la cual aplicar el análisis</param>
+        public AnalizadorLexico(String entrada)
+        {
+            ReiniciaDireccionesRelativasLectura();
+            Fuente = entrada;
+        }
+
+        #endregion
+
+        //================================================================================
+
+        #region Análisis léxico
+
+        /// <summary>
+        /// Genera el análisis léxico, leyendo el siguiente simbolo que se encuentre en la 
+        /// entrada dada, a partir de la posición actual
+        /// </summary>
+        /// <returns></returns>
+        public void SigSimbolo()
+        {
+            int estadoAnterior, entrada;
+            continua = true;
+            Simbolo = "";
+            bool primerCaracter = true;
+
+            estado = estadoAnterior = q00;
+            while (continua)
+            {
+                c = SigCaracter();
+
+                //Si acabamos de empezar a formar un simbolo, guardamos su posición (línea 
+                //y posición dentro de esa línea)
+                if (primerCaracter && !char.IsWhiteSpace(c))
+                {
+                    //Guardamos su número de línea y columna
+                    LineaUltimoSimbolo = LineaActual;
+                    PosicionUltimoSimbolo = PosicionCaracterActual;
+                    PosicionAbsolutaUltimoSimbolo = indice - 1;
+
+                    primerCaracter = false;
+                }
+
+                if (Char.IsDigit(c))
+                    entrada = 0;
+                else if (c == '+' || c == '-')
+                    entrada = 1;
+                else if (c == '*' || c == '/')
+                    entrada = 2;
+                else if (c == '(')
+                    entrada = 3;
+                else if (c == ')')
+                    entrada = 4;
+                else if (c == '$')
+                    entrada = 5;
+                else if (EsBlanco(c))
+                    entrada = 6;
+                else if (EsSaltoLinea(c))
+                    entrada = 7;
+                else
+                    entrada = 8;
+
+                estadoAnterior = estado;
+                estado = CalculaEstado(entrada);
+                Simbolo += c;
+
+                if (estado == FIN)
+                {
+                    switch (estadoAnterior)
+                    {
+                        case q00:
+                            break;
+                        case q01:
+                            Tipo = Simbolos.ENTERO;
+                            break;
+                        case q02:
+                            Tipo = Simbolos.OPERADOR_ADICION;
+                            break;
+                        case q03:
+                            Tipo = Simbolos.OPERADOR_MULTIPLICACION;
+                            break;
+                        case q04:
+                            Tipo = Simbolos.PARENTESIS_INICIO;
+                            break;
+                        case q05:
+                            Tipo = Simbolos.PARENTESIS_FIN;
+                            break;
+                        case q06:
+                            Tipo = Simbolos.PESOS;
+                            break;
+                    }
+
+                    if (EsSaltoLinea(c) || EsBlanco(c))
+                    {
+                        //Como le concatenamos c al simbolo, y ya que c es un blanco, hay 
+                        //que quitarselo al simbolo, pero no llamamos a Retroceso para no 
+                        //retroceder el índice
+                        Simbolo = Simbolo.Remove(Simbolo.Length - 1);
+                    }
+                    else
+                    {
+                        //Como le concatenamos c al simbolo hay que quitarselo, y 
+                        //retrocedemos el índice ya que c es el comienzo de otro 
+                        //simbolo
+                        Retroceso();
+                    }
+
+                    break;
+                }
+                else if (estado == ERR)
+                {
+                    Tipo = Simbolos.ERROR;
+
+                    //En los tipos de tamaño variable hay que retroceder
+                    if (estadoAnterior == q07)
+                        Retroceso();
+                    break;
+                }
+            }
+
+            //Si sólo encontramos un blanco, nos ciclamos hasta obtener un simbolo
+            if (estado == FIN && estadoAnterior == q00)
+                SigSimbolo();
+
+            //Si llegamos al fin de la entrada
+            if (Simbolo == "$")
+            {
+                if (this.fuente.Length == 0)
+                    PosicionCaracterActual = PosicionUltimoSimbolo = 1;
+                else
+                {
+                    PosicionCaracterActual--;
+                    PosicionUltimoSimbolo--;
+                    PosicionAbsolutaUltimoSimbolo++;
+                }
+            }
+        }
+
+        #endregion
+
+        //================================================================================
+
+        #region Flujo de entrada y administración de estados
+
+        /// <summary>
+        /// Reinicia la posición de lectura de la entrada al inicio de la misma
+        /// </summary>
+        public void ReiniciaPosicionEntrada()
+        {
+            indice = 0;
+            Simbolo = "";
+            ReiniciaDireccionesRelativasLectura();
+        }
+
+        //================================================================================
+
+        /// <summary>
+        /// Devuelve true si se llego al fin de la entrada analizada, false en caso contrario
+        /// </summary>
+        /// <returns></returns>
+        private bool Terminado()
+        {
+            return indice >= fuente.Length;
+        }
+
+        //================================================================================
+
+        /// <summary>
+        /// Devuelve el siguiente caracter dentro de la entrada dada, o el caracter de fin 
+        /// de entrada, si se llego al fin de la misma
+        /// </summary>
+        /// <returns></returns>
+        private char SigCaracter()
+        {
+            if (Terminado())
+            {
+                PosicionCaracterActual++;
+                return '$';
+            }
+            else
+            {
+                //Si el caracter es salto de línea, contabilizamos el salto de línea y 
+                //reiniciamos el de columnas
+                if (EsSaltoLinea(fuente[indice]))
+                {
+                    LineaActual++;
+                    PosicionCaracterActual = 0;
+                }
+                else
+                {
+                    PosicionCaracterActual++;
+                }
+
+                PosicionAbsolutaCaracterActual = indice;
+
+                return fuente[indice++];
+            }
+            //return Terminado() ? '$' : entrada[indice++];
+        }
+
+        //================================================================================
+
+        /// <summary>
+        /// Si no se ha llegado al fin de la entrada, retrocede el índice de los caracteres 
+        /// y evita continuar el análisis del simbolo
+        /// </summary>
+        private void Retroceso()
+        {
+            Simbolo = Simbolo.Remove(Simbolo.Length - 1);
+            if (c != '$')
+            {
+                indice--;
+                PosicionCaracterActual--;
+            }
+            continua = false;
+        }
+
+        //================================================================================
+
+        /// <summary>
+        /// Calcula el estado siguiente del automata, a partir del estado actual, y la 
+        /// entrada proporcionada
+        /// </summary>
+        /// <param name="entrada">La entrada actual</param>
+        /// <returns></returns>
+        private int CalculaEstado(int entrada)
+        {
+            return tablaEstados[estado, entrada];
+        }
+
+        #endregion
+
+        //================================================================================
+
+        #region Validación de caracteres
+
+        /// <summary>
+        /// Devuelve true si un caracter dado es considerado una letra, false en caso 
+        /// contrario
+        /// </summary>
+        /// <param name="caracter">El caracter a revisar</param>
+        /// <returns></returns>
+        private bool EsLetra(char caracter)
+        {
+            return Char.IsLetter(caracter) || caracter == '_';
+        }
+
+        //================================================================================
+
+        /// <summary>
+        /// Devuelve true si un caracter dado es considerado un blanco (a excepcion del 
+        /// salto de línea), false en caso contrario
+        /// </summary>
+        /// <param name="caracter">El caracter a verificar</param>
+        /// <returns></returns>
+        private bool EsBlanco(char caracter)
+        {
+            return !EsSaltoLinea(caracter) && Char.IsWhiteSpace(caracter);
+        }
+
+        //================================================================================
+
+        /// <summary>
+        /// Devuelve true si un caracter dado es el salto de línea, false en caso contrario
+        /// </summary>
+        /// <param name="caracter">El caracter a verificar</param>
+        /// <returns></returns>
+        private bool EsSaltoLinea(char caracter)
+        {
+            return caracter == '\n';
+            //return caracter == Environment.NewLine.ToCharArray()[0];
+        }
+
+        #endregion
+    }
+}
