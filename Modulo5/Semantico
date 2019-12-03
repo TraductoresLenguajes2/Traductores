@@ -1,0 +1,851 @@
+import java.util.Vector;
+
+public class Semantico {
+	
+	
+	public Vector<Entorno> entornos; 
+	int indice;
+	public Semantico()
+	{
+		this.entornos = new Vector<Entorno>();
+		entornos.addElement(new Entorno("global", "void", 0));
+	}
+	public String existeVariable(String nombre, int entorno)
+	{ 
+		for(int i =0; i<entornos.elementAt(entorno).variables.size(); i++)
+		{
+			if(entornos.elementAt(entorno).variables.elementAt(i).nombre.equals(nombre))
+			{
+				return entornos.elementAt(entorno).variables.elementAt(i).tipo;
+				
+			}
+		} 
+		for(int i =0; i<entornos.elementAt(0).variables.size(); i++)
+		{
+			if(entornos.elementAt(0).variables.elementAt(i).nombre.equals(nombre))
+			{
+				return entornos.elementAt(0).variables.elementAt(i).tipo;
+			}
+		}  
+		for(int i =0; i<entornos.elementAt(entorno).parametros.size(); i++)
+		{
+			if(entornos.elementAt(entorno).parametros.elementAt(i).nombre.equals(nombre))
+			{
+				return entornos.elementAt(entorno).parametros.elementAt(i).tipo;
+				
+			}
+		} 
+		return "null";
+	}
+	
+	public String existeEntorno(String nombre)
+	{
+		for(int i =1; i<entornos.size(); i++)
+		{
+			if(entornos.elementAt(i).nombre.equals(nombre))
+			{
+				return entornos.elementAt(i).tipo;
+			}
+		}
+		return "null";
+	}
+	public String tipoConstante(String nombre)
+	{ 
+		if(nombre.equals("true") || nombre.equals("false"))
+		{
+			return   "bool";
+		}
+		else if(nombre.charAt(0)=='"' )
+		{
+			return "string";
+		}
+		else
+		{ 
+			for(int i = 0; i<nombre.length(); i++)
+			{
+				if(nombre.charAt(i) == '.')
+				{
+					return   "float"; 
+				}
+			} 
+			return  "int";
+		}
+	}
+	public String checarParametros(String nombre, Vector<Simbolo> simbolos,int entornoActual)
+	{
+		int entorno=0;
+		int parametrosEntorno;
+		int parametrosEnviados=0;
+		int aritmeticoApertura=0;
+		int aritmeticoCierre=0;
+		String simbolo, tipo;
+		for(int i =1; i<entornos.size(); i++)
+		{
+			if(entornos.elementAt(i).nombre.equals(nombre))
+			{
+				entorno = i;
+				break;
+			}
+		} 
+		parametrosEntorno = entornos.elementAt(entorno).parametros.size();//1
+		while(!(simbolos.elementAt(indice).codigo.equals("13")) && aritmeticoCierre == aritmeticoApertura)
+		{
+			simbolo=simbolos.elementAt(indice).codigo;
+			switch(simbolo)
+			{
+				case "12":
+					aritmeticoApertura++;
+					break;
+				case "13":
+					aritmeticoCierre++;
+					break;
+				case "5":
+				case "6":
+				case "7": 
+				case "9": 
+					return "No puedes hacer operaciones logicas enviando parametros"; 
+				case "3":
+				case "4":
+					if(entornos.elementAt(entorno).parametros.elementAt(parametrosEnviados-1).tipo.equals("string") && !simbolos.elementAt(indice).simbolo.equals("+"))
+					{
+						return "Las cadenas solo pueden ser concatenadas";
+					}
+					else if(entornos.elementAt(entorno).parametros.elementAt(parametrosEnviados-1).tipo.equals("bool"))
+					{
+						return "Los booleanos no se pueden operar";
+					}
+					parametrosEnviados--;
+					break;
+				case "11":
+					break;
+				case "1":
+					 tipo = tipoConstante(simbolos.elementAt(indice).simbolo);
+ 
+					 parametrosEnviados++;
+					 
+					 if(parametrosEnviados>parametrosEntorno)
+					 {
+						return "La cantidad de parametros no es correcta";
+					 }
+					 if(!entornos.elementAt(entorno).parametros.elementAt(parametrosEnviados-1).tipo.equals(tipo))
+					 {
+						 if(!(entornos.elementAt(entorno).parametros.elementAt(parametrosEnviados-1).tipo.equals("float") && tipo.equals("int")))
+						 {
+							 return "Tipo de dato no con cuerda con lo que pide la funcion";
+						 } 
+					 }  
+					break;
+				case "0":
+					 tipo = existeVariable(simbolos.elementAt(indice).simbolo, entornoActual);
+					 if(tipo.equals("null"))
+					 {
+						 return "Variable "+simbolos.elementAt(indice).simbolo+" no existe";
+					 }
+					 else
+					 { 
+						 parametrosEnviados++;
+					 }
+					 if(parametrosEnviados>parametrosEntorno)
+					 {
+						return "La cantidad de parametros no es correcta";
+					 }
+					 if(!entornos.elementAt(entorno).parametros.elementAt(parametrosEnviados-1).tipo.equals(tipo))
+					 {
+						 if(!(entornos.elementAt(entorno).parametros.elementAt(parametrosEnviados-1).tipo.equals("float") && tipo.equals("int")))
+						 {
+							 return "Tipo de dato no con cuerda con lo que pide la funcion";
+						 }
+					 } 
+					 break;
+			}
+			indice++;
+			
+		}
+		if(parametrosEntorno!=parametrosEnviados)
+		{
+			return "La cantidad de parametros no es correcta";
+		}
+		return "1";
+	}
+	
+	public String analizar(Vector<Simbolo> simbolos)
+	{
+		String retorno;
+		String tipo = "", tipoVariable="";
+		String cadAux;
+		String tipoConstante = null;
+		int apertura=0, cierre=0;
+		indice = 0;
+		int tam = simbolos.size();
+		int entornoActual = 0, estado = 0;
+		int llaves = 0, aux;
+		boolean rtn = false;
+		boolean existe; 
+		while(indice<tam)
+		{
+			switch(estado)
+			{
+				case 0: 
+					if(simbolos.elementAt(indice).codigo.equals("2"))
+					{
+						tipo = simbolos.elementAt(indice).simbolo;
+						indice++;
+						estado = 1;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("14"))
+					{
+						llaves++;
+						indice++;
+					}
+
+					else if(simbolos.elementAt(indice).codigo.equals("15"))
+					{
+						llaves--;
+						indice++;
+						if(llaves==0)
+						{
+							if(rtn)
+							{
+								return "A la funcion "+entornos.elementAt(entornoActual).nombre + " le falta la sentencia return"; 
+							}
+							else
+							{ 
+								entornoActual = 0;
+							}
+						}
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("22"))
+					{
+						indice++;
+						rtn = false;
+						estado = 4;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("0"))
+					{
+						indice++;
+						estado = 6;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("17") || simbolos.elementAt(indice).codigo.equals("18"))
+					{
+						indice+=2;
+						apertura = 0;
+						cierre = 0;
+						estado = 12;
+					}  
+					else
+					{
+						indice++;
+					}
+					break;
+				case 1:
+					if(simbolos.elementAt(indice).codigo.equals("0"))
+					{
+						estado=2;
+						indice++;
+					}
+					break;
+				case 2:
+					if(simbolos.elementAt(indice).codigo.equals("11"))
+					{
+						aux = 0;
+						do
+						{
+							for(int i =0; i<entornos.elementAt(aux).variables.size(); i++)
+							{
+								if(entornos.elementAt(aux).variables.elementAt(i).nombre.equals(simbolos.elementAt(indice-1).simbolo))
+								{
+									return "Ya hay una variable con ese nombre ("+entornos.elementAt(aux).variables.elementAt(i).nombre + ")" ;
+								}
+								
+							}
+							for(int i =0; i<entornos.elementAt(aux).parametros.size(); i++)
+							{
+								if(entornos.elementAt(aux).parametros.elementAt(i).nombre.equals(simbolos.elementAt(indice-1).simbolo))
+								{
+									return "Ya hay una variable con ese nombre ("+entornos.elementAt(aux).parametros.elementAt(i).nombre + ")" ;
+								}
+								
+							}
+							aux+=entornoActual;
+						}while(aux <= entornoActual && entornoActual!=0);
+						entornos.elementAt(entornoActual).variables.addElement(new Variable(simbolos.elementAt(indice-1).simbolo, tipo));
+						indice+=2;
+						estado = 2;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("10"))
+					{
+						aux = 0;
+						do
+						{
+							for(int i =0; i<entornos.elementAt(aux).variables.size(); i++)
+							{
+								if(entornos.elementAt(aux).variables.elementAt(i).nombre.equals(simbolos.elementAt(indice-1).simbolo))
+								{
+									return "Ya hay una variable con ese nombre ("+entornos.elementAt(aux).variables.elementAt(i).nombre + ")" ;
+								}
+								
+							}
+							for(int i =0; i<entornos.elementAt(aux).parametros.size(); i++)
+							{
+								if(entornos.elementAt(aux).parametros.elementAt(i).nombre.equals(simbolos.elementAt(indice-1).simbolo))
+								{
+									return "Ya hay una variable con ese nombre ("+entornos.elementAt(aux).parametros.elementAt(i).nombre + ")" ;
+								}
+								
+							}
+							aux+=entornoActual;
+						}while(aux <= entornoActual && entornoActual!=0);
+						entornos.elementAt(entornoActual).variables.addElement(new Variable(simbolos.elementAt(indice-1).simbolo, tipo));
+						indice++;
+						estado = 0;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("12"))
+					{
+						for(int i =0; i<entornos.size(); i++)
+						{ 
+							if(entornos.elementAt(i).nombre.equals(simbolos.elementAt(indice-1).simbolo))
+							{ 
+								return "Ya hay una funcion con ese nombre ("+entornos.elementAt(i).nombre + ")" ;
+							}
+						}
+						entornos.addElement(new Entorno(simbolos.elementAt(indice-1).simbolo,simbolos.elementAt(indice-2).simbolo, entornos.size()));
+						indice++;
+						estado = 3;
+						entornoActual=entornos.size();
+						entornoActual--;
+					}
+					break;
+				case 3:
+					while(!simbolos.elementAt(indice).codigo.equals("13"))
+					{	
+						if(simbolos.elementAt(indice).codigo.equals("0"))
+						{
+	
+							for(int i =0; i<entornos.elementAt(0).variables.size(); i++)
+							{
+								if(entornos.elementAt(0).variables.elementAt(i).nombre.equals(simbolos.elementAt(indice).simbolo))
+								{
+									return "Ya hay una variable con ese nombre ("+entornos.elementAt(0).variables.elementAt(i).nombre + ")" ;
+								}
+								
+							}
+							for(int i =0; i<entornos.elementAt(entornoActual).parametros.size(); i++)
+							{
+								if(entornos.elementAt(entornoActual).parametros.elementAt(i).nombre.equals(simbolos.elementAt(indice).simbolo))
+								{
+									return "Ya hay una variable con ese nombre ("+entornos.elementAt(entornoActual).parametros.elementAt(i).nombre + ")" ;
+								}
+								
+							}
+							entornos.elementAt(entornoActual).parametros.addElement(new Variable(simbolos.elementAt(indice).simbolo, simbolos.elementAt(indice-1).simbolo));
+							
+						}
+						indice++;
+						
+					}
+					estado = 0;
+					indice+=2;
+					llaves++;
+					rtn = true;
+					break;
+				case 4:
+					if(simbolos.elementAt(indice).codigo.equals("12"))
+					{
+						indice++;
+						estado = 4;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("0") && simbolos.elementAt(indice+1).codigo.equals("12") && simbolos.elementAt(indice+2).codigo.equals("13"))
+					{
+						existe = false;
+						for(int i = 1; i<entornos.size(); i++)
+						{
+							if(entornos.elementAt(i).nombre.equals(simbolos.elementAt(indice).simbolo))
+							{
+								if(!entornos.elementAt(entornoActual).tipo.equals(entornos.elementAt(i).tipo))
+								{
+									if(!(entornos.elementAt(entornoActual).tipo.equals("float") && entornos.elementAt(i).tipo.equals("int")))
+									{
+										return "El tipo de la funcion "+entornos.elementAt(i).nombre + " no es del tipo esperado " + entornos.elementAt(entornoActual).tipo;
+								
+									}
+									else
+									{
+										existe = true;
+									}
+								}
+								else
+								{
+									existe = true;
+								}
+							}
+						}
+						if(!existe)
+						{
+							return "La funcion '"+simbolos.elementAt(indice).simbolo+"()' no existe";
+						}
+						indice+=3;
+						estado = 5;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("0"))
+					{
+						existe=false;
+						for(int i = 0; i<entornos.elementAt(entornoActual).variables.size(); i++)
+						{
+							 if(entornos.elementAt(entornoActual).variables.elementAt(i).nombre.equals( simbolos.elementAt(indice).simbolo))
+							 {
+								 if(!entornos.elementAt(entornoActual).variables.elementAt(i).tipo.equals(entornos.elementAt(entornoActual).tipo))
+								 {
+									 if(!(entornos.elementAt(entornoActual).variables.elementAt(i).tipo.equals("int") && entornos.elementAt(entornoActual).tipo.equals("float")))
+									 {
+										 return "El tipo de la variable "+entornos.elementAt(entornoActual).variables.elementAt(i).nombre + " no es del tipo esperado " + entornos.elementAt(entornoActual).tipo;
+								 
+									 }
+									 else
+									 {
+										 existe = true;
+									 }
+								 }
+								 else
+								 {
+									 existe = true;
+								 }
+								 
+							 }
+						}
+						if(!existe)
+						{
+							for(int i = 0; i<entornos.elementAt(entornoActual).parametros.size(); i++)
+							{
+								 if(entornos.elementAt(entornoActual).parametros.elementAt(i).nombre.equals( simbolos.elementAt(indice).simbolo))
+								 {
+									 if(!entornos.elementAt(entornoActual).parametros.elementAt(i).tipo.equals(entornos.elementAt(entornoActual).tipo))
+									 {
+										 if(!(entornos.elementAt(entornoActual).parametros .elementAt(i).tipo.equals("int") && entornos.elementAt(entornoActual).tipo.equals("float")))
+										 {
+											 return "El tipo de la variable "+entornos.elementAt(entornoActual).parametros.elementAt(i).nombre + " no es del tipo esperado " + entornos.elementAt(entornoActual).tipo;
+									 
+										 }
+										 else
+										 {
+											 existe = true;
+										 } 
+									 }
+									 else
+									 {
+										 existe = true;
+									 }
+									 
+								 }
+							}
+							if(!existe)
+							{
+								for(int i = 0; i<entornos.elementAt(0).variables.size(); i++)
+								{
+									 if(entornos.elementAt(0).variables.elementAt(i).nombre.equals( simbolos.elementAt(indice).simbolo))
+									 {
+										 if(!entornos.elementAt(0).variables.elementAt(i).tipo.equals(entornos.elementAt(entornoActual).tipo))
+										 {
+											 if(!(entornos.elementAt(0).variables.elementAt(i).tipo.equals("int") && entornos.elementAt(entornoActual).tipo.equals("float")))
+											 {
+												 return "El tipo de la variable "+entornos.elementAt(0).variables.elementAt(i).nombre + " no es del tipo esperado " + entornos.elementAt(entornoActual).tipo;
+										 
+											 }
+											 else
+											 {
+												 existe = true;
+											 }
+										 }
+										 else
+										 {
+											 existe = true;
+										 }
+										 
+									 }
+								}
+								if(!existe)
+								{
+									return "La variable '"+simbolos.elementAt(indice).simbolo+"' no existe";
+								}
+							}
+						}
+						indice++;
+						estado = 5;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("1"))
+					{
+						if(simbolos.elementAt(indice).simbolo.equals("true") || simbolos.elementAt(indice).simbolo.equals("false"))
+						{
+							tipoConstante = "bool";
+						}
+						else if(simbolos.elementAt(indice).simbolo.charAt(0)=='"' )
+						{
+							tipoConstante = "string";
+						}
+						else
+						{
+							existe = false;
+							cadAux = simbolos.elementAt(indice).simbolo;
+							for(int i = 0; i<cadAux.length(); i++)
+							{
+								if(cadAux.charAt(i) == '.')
+								{
+									tipoConstante = "float";
+									existe = true;
+									break;
+								}
+							}
+							if(!existe)
+							{
+								tipoConstante = "int";
+							}
+						}
+						if(entornos.elementAt(entornoActual).tipo.equals("int") && !tipoConstante.equals("int"))
+						{
+							return "La constante es de un tipo distinto al esperado";
+						}
+						else if(entornos.elementAt(entornoActual).tipo.equals("float") && !(tipoConstante.equals("int") || tipoConstante.equals("float")))
+						{
+							return "La constante es de un tipo distinto al esperado";
+						}
+						else if(entornos.elementAt(entornoActual).tipo.equals("string") && !tipoConstante.equals("string"))
+						{
+							return "La constante es de un tipo distinto al esperado";
+						}
+						else if(entornos.elementAt(entornoActual).tipo.equals("bool") && !tipoConstante.equals("bool"))
+						{
+							return "La constante es de un tipo distinto al esperado";
+						}
+						indice++;
+						estado = 5;
+					}
+					break;
+				case 5:
+					if(simbolos.elementAt(indice).codigo.equals("10"))
+					{
+						indice++;
+						estado = 0;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("12") || simbolos.elementAt(indice).codigo.equals("13"))
+					{
+						indice++;
+						estado = 5; 
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("3") ||  simbolos.elementAt(indice).codigo.equals("4") )
+					{ 
+						if(entornos.elementAt(entornoActual).tipo.equals("string") && !simbolos.elementAt(indice).simbolo.equals("+"))
+						{
+							return "las cadenas solo pueden usar el operador +";
+						} 
+						if(entornos.elementAt(entornoActual).tipo.equals("bool"))
+						{
+							return "No puedes operar boleanos aritmeticamente";
+						}
+						indice++;
+						estado = 4;
+						break;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("5") ||  simbolos.elementAt(indice).codigo.equals("9") ||  simbolos.elementAt(indice).codigo.equals("6") ||  simbolos.elementAt(indice).codigo.equals("7"))
+					{ 
+						return "no puedes retornar operaciones logicas, solo valores boleanos"; 
+					} 
+					break;
+				case 6:
+					if(simbolos.elementAt(indice).codigo.equals("12"))
+					{
+						indice++;
+						estado = 7;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("16"))
+					{
+						indice++;
+						estado = 8;
+					}
+					break;
+				case 7: 
+					tipo = 	existeEntorno(simbolos.elementAt(indice-2).simbolo);
+					if(tipo.equals("null"))
+					{
+						return "Funcion "+simbolos.elementAt(indice-2).simbolo+" inexistente";
+					} 
+					estado = 9;
+					break;
+				case 8:
+					tipoVariable = existeVariable(simbolos.elementAt(indice-2).simbolo, entornoActual);
+					if(tipoVariable.equals("null"))
+					{
+						return "Variable "+simbolos.elementAt(indice-2).simbolo+" inexistente";
+					}
+					estado = 10;
+					break;
+				case 9:
+					retorno = checarParametros(simbolos.elementAt(indice-2).simbolo, simbolos, entornoActual);
+					if(!retorno.equals("1"))
+					{
+						return retorno;
+					}
+					indice+=2;
+					estado = 0;
+					break;
+				case 10: 
+					if(simbolos.elementAt(indice).codigo.equals("1"))
+					{
+						tipo = tipoConstante(simbolos.elementAt(indice).simbolo);
+						if(!tipo.equals(tipoVariable))
+						{ 
+							if(!(tipoVariable.equals("float") &&  tipo.equals("int")))
+							{
+								return simbolos.elementAt(indice).simbolo + " no es del tipo de dato esperado";
+							} 
+						} 
+						indice++;
+						estado = 11;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("0"))
+					{
+						if(simbolos.elementAt(indice+1).codigo.equals("12"))
+						{
+							tipo = existeEntorno(simbolos.elementAt(indice).simbolo);
+							if(tipo.equals("null"))
+							{
+								return "La funcion "+simbolos.elementAt(indice).simbolo+" no existe";
+							}
+							if(!tipo.equals(tipoVariable))
+							{
+								if(!(tipoVariable.equals("float") &&  tipo.equals("int")))
+								{
+									return simbolos.elementAt(indice).simbolo + " no es del tipo de dato esperado";
+								}
+							}
+							indice+=2;
+							retorno = checarParametros(simbolos.elementAt(indice-2).simbolo, simbolos, entornoActual);
+
+							if(!retorno.equals("1"))
+							{
+								return retorno;
+							}  
+						}
+						else
+						{
+							tipo = existeVariable(simbolos.elementAt(indice).simbolo, entornoActual);
+							if(tipo.equals("null"))
+							{
+								return "La variable "+simbolos.elementAt(indice).simbolo+" no existe";
+							}
+							if(!tipo.equals(tipoVariable))
+							{
+								if(!(tipoVariable.equals("float") &&  tipo.equals("int")))
+								{
+									return simbolos.elementAt(indice).simbolo + " no es del tipo de dato esperado";
+							
+								}
+							} 
+						}
+						indice++;
+						estado = 11;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("12") || simbolos.elementAt(indice).codigo.equals("13"))
+					{ 
+						indice++;
+						estado = 10;
+					}
+					break; 
+				case 11: 
+					if(simbolos.elementAt(indice).codigo.equals("10"))
+					{
+						indice++;
+						estado = 0;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("3") || simbolos.elementAt(indice).codigo.equals("4"))
+					{
+						if(tipo.equals("bool"))
+						{
+							return "No puedes operar booleanos";
+						}
+						else if(tipo.equals("string") && !simbolos.elementAt(indice).simbolo.equals("+"))
+						{
+							return "Solo puedes concatenar cadenas";
+						}
+						indice++;
+						estado = 10;
+					} 
+					else if(simbolos.elementAt(indice).codigo.equals("12") || simbolos.elementAt(indice).codigo.equals("13"))
+					{ 
+						indice++;
+						estado = 11;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("5") || simbolos.elementAt(indice).codigo.equals("6") || simbolos.elementAt(indice).codigo.equals("7") || simbolos.elementAt(indice).codigo.equals("9"))
+					{ 
+						return "No puedes hacer operaciones logicas en una asignacion";
+					}
+					break; 
+				case 12:
+					if(simbolos.elementAt(indice).codigo.equals("1"))
+					{
+						tipo = tipoConstante(simbolos.elementAt(indice).simbolo); 
+						indice++;
+						estado = 13;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("0"))
+					{
+						if(simbolos.elementAt(indice+1).codigo.equals("12"))
+						{
+							tipo = existeEntorno(simbolos.elementAt(indice).simbolo);
+							if(tipo.equals("null"))
+							{
+								return "La funcion "+simbolos.elementAt(indice).simbolo+" no existe";
+							} 
+							indice+=2;
+							retorno = checarParametros(simbolos.elementAt(indice-2).simbolo, simbolos, entornoActual);
+
+							if(!retorno.equals("1"))
+							{
+								return retorno;
+							}  
+						}
+						else
+						{
+							tipo = existeVariable(simbolos.elementAt(indice).simbolo, entornoActual);
+							if(tipo.equals("null"))
+							{
+								return "La variable "+simbolos.elementAt(indice).simbolo+" no existe";
+							} 
+						}
+						indice++;
+						estado = 13;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("6") || simbolos.elementAt(indice).codigo.equals("7"))
+					{
+						indice++;
+						estado = 12;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("12"))
+					{
+						indice++;
+						apertura++;
+						estado = 12;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("13"))
+					{
+						if(cierre==apertura)
+						{
+							indice++;
+							estado=0;
+						}
+						else
+						{
+							indice++;
+							cierre++;
+							estado = 12;
+						}
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("3") || simbolos.elementAt(indice).codigo.equals("4"))
+					{
+						return "No puedes realizar operaciones aritmeticas en una condicion";
+					} 
+					break;
+				case 13:
+					if(simbolos.elementAt(indice).codigo.equals("5") || simbolos.elementAt(indice).codigo.equals("9"))
+					{
+						indice++;
+						estado = 14;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("3") || simbolos.elementAt(indice).codigo.equals("4"))
+					{
+						return "No puedes realizar operaciones aritmeticas en una condicion";
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("13"))
+					{
+						if(cierre==apertura)
+						{
+							indice++;
+							estado=0;
+						}
+						else
+						{
+							indice++;
+							cierre++;
+							estado = 13;
+						}
+					}
+					break; 
+				case 14:
+					if(simbolos.elementAt(indice).codigo.equals("1"))
+					{
+						tipoVariable = tipoConstante(simbolos.elementAt(indice).simbolo);
+						if(!tipo.equals(tipoVariable))
+						{ 
+							if(!(tipoVariable.equals("float") &&  tipo.equals("int")) && !(tipoVariable.equals("int") &&  tipo.equals("float")))
+							{
+								return simbolos.elementAt(indice).simbolo + " no es del tipo de dato esperado";
+							} 
+						} 
+						indice++;
+						estado = 12;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("3") || simbolos.elementAt(indice).codigo.equals("4"))
+					{
+						return "No puedes realizar operaciones aritmeticas en una condicion";
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("0"))
+					{
+						if(simbolos.elementAt(indice+1).codigo.equals("12"))
+						{
+							tipoVariable = existeEntorno(simbolos.elementAt(indice).simbolo);
+							if(tipoVariable.equals("null"))
+							{
+								return "La funcion "+simbolos.elementAt(indice).simbolo+" no existe";
+							}
+							if(!tipo.equals(tipoVariable))
+							{
+								if(!(tipoVariable.equals("float") &&  tipo.equals("int")) && !(tipoVariable.equals("int") &&  tipo.equals("float")))
+									{
+									return simbolos.elementAt(indice).simbolo + " no es del tipo de dato esperado";
+								}
+							}
+							indice+=2;
+							retorno = checarParametros(simbolos.elementAt(indice-2).simbolo, simbolos, entornoActual);
+
+							if(!retorno.equals("1"))
+							{
+								return retorno;
+							}  
+						}
+						else
+						{
+							tipoVariable = existeVariable(simbolos.elementAt(indice).simbolo, entornoActual);
+							if(tipoVariable.equals("null"))
+							{
+								return "La variable "+simbolos.elementAt(indice).simbolo+" no existe";
+							}
+							if(!tipo.equals(tipoVariable))
+							{
+								if(!(tipoVariable.equals("float") &&  tipo.equals("int")) && !(tipoVariable.equals("int") &&  tipo.equals("float")))
+									{
+									return simbolos.elementAt(indice).simbolo + " no es del tipo de dato esperado";
+							
+								}
+							} 
+						}
+						indice++;
+						estado = 12;
+					}
+					else if(simbolos.elementAt(indice).codigo.equals("13"))
+					{
+						if(cierre==apertura)
+						{
+							indice++;
+							estado=0;
+						}
+						else
+						{
+							indice++;
+							cierre++;
+							estado = 14;
+						}
+					} 
+					break; 
+			} 
+		} 
+		return "Semanticamente correcto";
+	}
+}
