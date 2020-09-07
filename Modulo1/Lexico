@@ -1,0 +1,179 @@
+nclude <iostream>
+#include <stdio.h>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
+#include <regex>
+
+#define COLOR system("color 4F");;
+#define TITULO system("title Analizador Lexico");;
+using namespace std;
+
+string palabra;
+int i;
+int aux;
+int id, pr;
+
+int EsNumero(){
+    regex entero("^(\\+,-)?[1-9]+$");
+    regex flotante("^(\\+,-)?[1-9]*\\.?[1-9]+$");
+
+    int ENTERO = 1;
+    int FLOTANTE = 2;
+
+    if (regex_match(palabra, entero)) {
+        return ENTERO;
+    }
+    else if (regex_match(palabra, flotante)) {
+        return FLOTANTE;
+    }
+
+    return 0;
+    /*
+    char  *cpalabra=new char;
+    strcpy(cpalabra, palabra.c_str());
+
+    for(unsigned int j=0; j<strlen(cpalabra); j++) {
+        if(!(cpalabra[j]>='0' && cpalabra[j]<='9')) //validar si es numero {
+            aux=1; //no es numero
+        }
+
+    }
+    if(aux==0) //es numero {
+
+        return true;
+    }
+    else {
+        return false;
+    }
+    */
+}
+
+bool EsIdentificador(){
+    char  *ppo=new char;
+    strcpy(ppo, palabra.c_str());
+
+    for(unsigned int j=0; j<strlen(ppo); j++){
+
+        if((ppo[0] =='1' or ppo[0] =='2' or ppo[0] =='3' or ppo[0] =='4' or ppo[0] =='5' or ppo[0] =='6' or
+                ppo[0] =='7' or ppo[0] =='8' or ppo[0] =='9' or ppo[0] =='0') &&
+
+                (ppo[j] == 'a' or ppo[j] == 'b' or ppo[j] == 'c' or ppo[j] == 'd' or ppo[j] == 'e' or ppo[j] == 'f' or
+                 ppo[j] == 'g' or ppo[j] == 'h' or ppo[j] == 'i' or ppo[j] == 'j' or ppo[j] == 'k' or ppo[j] == 'l' or
+                 ppo[j] == 'm' or ppo[j] == 'n' or ppo[j] == 'o' or ppo[j] == 'p' or ppo[j] == 'q' or ppo[j] == 'r' or
+                 ppo[j] == 's' or ppo[j] == 't' or ppo[j] == 'u' or ppo[j] == 'v' or ppo[j] == 'w' or ppo[j] == 'x' or
+                 ppo[j] == 'y' or ppo[j] == 'z' or ppo[j] == 'A' or ppo[j] == 'B' or ppo[j] == 'C' or ppo[j] == 'D' or
+                 ppo[j] == 'E' or ppo[j] == 'F' or ppo[j] == 'G' or ppo[j] == 'H' or ppo[j] == 'I' or ppo[j] == 'J' or
+                 ppo[j] == 'K' or ppo[j] == 'L' or ppo[j] == 'M' or ppo[j] == 'N' or ppo[j] == 'O' or ppo[j] == 'P' or
+                 ppo[j] == 'Q' or ppo[j] == 'R' or ppo[j] == 'S' or ppo[j] == 'T' or ppo[j] == 'U' or ppo[j] == 'V' or
+                 ppo[j] == 'W' or ppo[j] == 'X' or ppo[j] == 'Y' or ppo[j] == 'Z' or ppo[j] == '_'))
+        {
+            id=1;
+            break;
+        }
+
+        else if(ppo[j] == 'a' or ppo[j] == 'b' or ppo[j] == 'c' or ppo[j] == 'd' or ppo[j] == 'e' or ppo[j] == 'f' or ppo[j] == 'g' or
+                ppo[j] == 'h' or ppo[j] == 'i' or ppo[j] == 'j' or ppo[j] == 'k' or ppo[j] == 'l' or ppo[j] == 'm' or ppo[j] == 'n' or
+                ppo[j] == 'o' or ppo[j] == 'p' or ppo[j] == 'q' or ppo[j] == 'r' or ppo[j] == 's' or ppo[j] == 't' or ppo[j] == 'u' or
+                ppo[j] == 'v' or ppo[j] == 'w' or ppo[j] == 'x' or ppo[j] == 'y' or ppo[j] == 'z' or ppo[j] == 'A' or ppo[j] == 'B' or
+                ppo[j] == 'C' or ppo[j] == 'D' or ppo[j] == 'E' or ppo[j] == 'F' or ppo[j] == 'G' or ppo[j] == 'H' or ppo[j] == 'I' or
+                ppo[j] == 'J' or ppo[j] == 'K' or ppo[j] == 'L' or ppo[j] == 'M' or ppo[j] == 'N' or ppo[j] == 'O' or ppo[j] == 'P' or
+                ppo[j] == 'Q' or ppo[j] == 'R' or ppo[j] == 'S' or ppo[j] == 'T' or ppo[j] == 'U' or ppo[j] == 'V' or ppo[j] == 'W' or
+                ppo[j] == 'X' or ppo[j] == 'Y' or ppo[j] == 'Z' or ppo[j] == '_')
+        {
+            id=2;
+        }
+
+    }
+    if (id==1) {
+        cout<<"Es una palabra no registrada"<<endl;
+        return true;
+    }
+
+    if (id ==2) {
+        cout<<"Es un cadena"<<endl;
+        return true;
+    }
+
+}
+
+void Verificador(){
+
+    string preservadas[15]= {"else","if","switch","void","while","float","int","do","char",
+                             "for","return","case","string","default","double"
+                            };
+    string logicos[15]= {"<", "<=", ">", ">=", "&", "||", "==", "!=",","};
+    string operadores[15]= {"+","-","*","/"};
+    string simbolos[15]= {"[","]","{","}","(",")","$","#"};
+    string digitos[15]= {"0","1","2","3","4","5","6","7","8","9"};
+    do {
+        if(palabra==preservadas[i]) {
+            cout <<"Es una palabra reservada"<<endl;
+            break;
+        }
+
+        if(aux==0) {
+            int result;
+            if((result = EsNumero())==1) {
+                cout <<"Es un numero entero"<<endl;
+                break;
+
+            } else if (result == 2) {
+                cout <<"Es un numero flotante"<<endl;
+                break;
+            }
+        }
+
+        if(palabra==logicos[i]) {
+            cout <<"Es simbolo logico"<<endl;
+            break;
+        }
+        if(palabra==operadores[i]) {
+            cout <<"Es operador"<<endl;
+            break;
+        }
+        if(palabra==simbolos[i]) {
+            cout <<"Es simbolo"<<endl;
+            break;
+        }
+        i++;
+
+    } while(i < 15);
+
+    if(i == 15) {
+        if(!EsIdentificador()) {
+            cout<<"Palabra no registrada"<<endl;
+        }
+
+    }
+}
+
+
+int main(){
+    TITULO
+    int salida;
+    do
+    {
+        salida=0;
+        i=0;
+        aux=0;
+        id=0;
+        pr=0;
+        system("cls");
+
+        cout <<"\t\tA N A L I Z A D O R   L E X I C O"<<endl<<endl;
+        cout <<"\tEscribe para analizar"<<endl;
+        cout<<"\t";
+        cin >>palabra;
+        cout<<"\n";
+        Verificador();
+        cout<<"\n\n";
+        cout<<"Desea continuar? 1=Si , 2=No"<<endl;
+        cout<<"Opcion: ";
+        cin>>salida;
+    }
+    while(salida == 1);
+    return 0;
+};
