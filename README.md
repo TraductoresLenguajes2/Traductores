@@ -2,7 +2,7 @@
 
 - Prácticas **20%**
 - Analizador léxico **5%**
-- Analizador sintacáctico **30%**
+- Analizador sintáctico **30%**
 - Analizador semántico **15%**
 - Generación de código **30%**
 
