@@ -1,0 +1,141 @@
+
+import java.io.*;
+import java.util.Scanner;
+
+public class compilador
+{
+                static String cadena;
+            static String cadena2;
+                static String [] divides;
+                static String [] divides2;
+                static String [] divides3;
+       
+               
+                static boolean b;
+                static boolean a;
+                static boolean c;
+                static boolean d;
+                static boolean e;
+                static boolean f;
+                static boolean g;
+                static boolean h;
+       
+               
+                static int a2;
+                static int puntosycomas=0;;
+               
+       
+        public void sintaxis()throws IOException
+        {
+       
+               
+                Scanner leer=new Scanner(System.in);
+               
+                    System.out.println("\nValua si es correcto o incorrecto un: System.out.print(''Hola Mundo'');");   
+                        System.out.println("Introduce tu cadena a validar:");
+                        cadena = leer.nextLine();
+                        char []dividecaracteres=cadena.toCharArray();
+                        divides=cadena.split("\\.");
+                        divides2=cadena.split("\\(");
+                        cadena2=divides2[0];
+                        divides3=cadena2.split("\\.");
+                 
+               
+/////////////////////////////////////////////////////////////////////////////////////////////                  
+         for(int i=0;i<divides.length;i++){
+                if(i==0){
+                         if(divides[0].equals("System")){
+                                a=true;
+                        }
+                }              
+                if(i==1){
+                        if(divides[1].equals("out")){
+                                b=true;
+                         }
+                 }     
+           }
+/////////////////////////////////////////////////////////////////////////////////////////////////      
+         if(divides.length==0){
+                }else
+                        for(int p=0;p<divides3.length;p++){
+                        if(p==2){
+                                if(divides3[p].equals("print")){
+                                        c=true;
+                                }
+                    }
+                }
+         
+////////////////////////////////////////////////////////////////////////////////////////////////                       
+         for(int l=0;l<dividecaracteres.length;l++){
+                if(l==16){
+                 if(dividecaracteres[16]=='('){
+                                d=true;
+                        }
+                }
+                if(l==17){
+                        if(dividecaracteres[17]=='"'){
+                                e=true;
+                        }
+                }
+         }
+               
+       
+//////////////////////////////////////////////////////////////////////////////////////
+        for(int j=0;j<dividecaracteres.length;j++){
+                                if(dividecaracteres[j]==')'){
+                                        a2 = j;
+                                        f=true;
+                                }
+                        }
+///////////////////////////////////////////////////////////////////////////////////////
+    int comillas=0;
+    int comilla2=a2-1;
+        for(int w=0;w<dividecaracteres.length;w++){
+                        if(dividecaracteres[w]=='"'){
+                                comillas++;
+                        }
+                }
+       
+        if(comillas>=3){
+                                g=false;
+                                e=false;
+                }
+                        else{
+                             for(int u=0;u<dividecaracteres.length;u++){
+                                        if(u==comilla2){
+                                                if(dividecaracteres[u]=='"'){
+                                                        g=true;
+                                                 }
+                                        }
+                             }
+                }      
+                       
+/////////////////////////////////////////////////////////////////////////////////////////
+    int puntocoma=a2+1;        
+        int lol=puntocoma+1;
+       
+    if(dividecaracteres.length!=lol){
+    h=false;   
+        }
+        else{
+                for(int z=0;z<dividecaracteres.length;z++){
+                           if(z==puntocoma){   
+                                if(dividecaracteres[z]==';'){
+                                        h=true;
+                                }
+                           }
+                          }
+                        }      
+                       
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+        if(a==true&&b==true&&c==true&&d==true&&e==true&&f==true&&g==true&&h==true){
+                                System.out.println("\nSintaxis Correcta");
+                        }else{
+                                System.out.println("\nSintaxis Incorrecta");
+                }
+               
+
+        }
+       
+}
